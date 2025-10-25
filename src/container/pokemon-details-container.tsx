@@ -6,14 +6,15 @@ import { ArrowLeft, Zap, Heart, Shield, Sword } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 
 import { PokemonDetailsSkeleton } from "@/skeletons/pokemon-details-skeleton";
 import { ErrorComponent } from "@/components/error-component";
 import { PokemonAbilities } from "@/components/pokemon-details/pokemon-abilities";
 import { PokemonStats } from "@/components/pokemon-details/pokemon-stats";
-import { cn } from "@/lib/utils";
+import { capitalizedPokemonName, cn } from "@/lib/utils";
 import { PokemonTypes } from "@/components/pokemon-details/pokemon-types";
+import { FallbackImage } from "@/components/fallback-image";
+import { Separator } from "@/components/ui/separator";
 
 export const PokemonDetailsContainer = () => {
   const { name } = useParams<{ name: string }>();
@@ -48,10 +49,7 @@ export const PokemonDetailsContainer = () => {
     );
   }
 
-  const capitalizedName = pokemon.name
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  const capitalizedName = capitalizedPokemonName(pokemon.name);
 
   const imageUrl =
     pokemon.sprites.other?.["official-artwork"]?.front_default ||
@@ -140,11 +138,16 @@ export const PokemonDetailsContainer = () => {
                     transition={{ duration: 3, repeat: Infinity }}
                   />
 
-                  <img
-                    src={imageUrl}
-                    alt={capitalizedName}
-                    className='w-full h-full object-contain drop-shadow-2xl relative z-10'
-                  />
+                  {/* Fallback Image */}
+                  {!imageUrl ? (
+                    <FallbackImage title={capitalizedName} />
+                  ) : (
+                    <img
+                      src={imageUrl}
+                      alt={capitalizedName}
+                      className='w-full h-full object-contain drop-shadow-2xl relative z-10'
+                    />
+                  )}
 
                   {/* Sparkle Effects */}
                   {[...Array(4)].map((_, i) => (

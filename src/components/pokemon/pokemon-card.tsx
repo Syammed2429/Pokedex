@@ -10,6 +10,8 @@ import {
   cardVariants,
   imageVariants,
 } from "@/motion-variants/pokemon-card-variant";
+import { FallbackImage } from "../fallback-image";
+import { capitalizedPokemonName } from "@/lib/utils";
 
 interface PokemonCardProps {
   pokemon: PokemonListResult;
@@ -26,10 +28,7 @@ export const PokemonCard = ({
   const [imageError, setImageError] = useState(false);
   const pokemonId = pokemon.url.split("/").filter(Boolean).pop();
 
-  const capitalizedName = pokemon.name
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  const capitalizedName = capitalizedPokemonName(pokemon.name);
 
   return (
     <motion.div
@@ -83,19 +82,7 @@ export const PokemonCard = ({
 
               {/* Fallback Image */}
               {(!imageData?.imageUrl || imageError) && (
-                <motion.div
-                  className='w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-100 to-orange-100 dark:from-slate-700 dark:to-slate-800 relative z-10'
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className='text-center'>
-                    <div className='text-4xl mb-2 text-amber-500'>🎯</div>
-                    <p className='text-xs text-amber-600 dark:text-amber-400 font-medium'>
-                      {capitalizedName}
-                    </p>
-                  </div>
-                </motion.div>
+                <FallbackImage title={capitalizedName} />
               )}
 
               {/* Pokemon Image */}
