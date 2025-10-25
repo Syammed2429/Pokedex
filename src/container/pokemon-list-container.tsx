@@ -1,15 +1,18 @@
 import { useInfiniteQuery, useQueries } from "@tanstack/react-query";
 
-import { Loader2 } from "lucide-react";
-
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { pokemonApi } from "@/services/pokemon-service";
 import { PokemonCard } from "@/components/pokemon/pokemon-card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+
 import { useInView } from "react-intersection-observer";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+
+import { PokemonListSkeleton } from "@/skeletons/pokemon-list-skeleton";
+import { ErrorComponent } from "@/components/error-component";
+
+import { PokemonListFetchingMore } from "@/components/pokemon/pokemon-list-fetching-more";
+import { PokemonCompletionComponent } from "@/components/pokemon/pokemon-completion-component";
+import { PokemonListHeader } from "@/components/pokemon/pokemon-list-header";
+import { useMemo } from "react";
 
 export const PokemonListContainer = () => {
   const {
@@ -51,16 +54,20 @@ export const PokemonListContainer = () => {
 
   //  Map of Pokemon names to their image data
   const pokemonImageMap = new Map();
-  allPokemon.forEach((pokemon, index) => {
-    const imageQuery = imageQueries[index];
-    if (imageQuery?.data) {
-      const pokemonId = pokemon.url.split("/").filter(Boolean).pop();
-      pokemonImageMap.set(pokemon.name, {
-        imageUrl: imageQuery.data,
-        id: parseInt(pokemonId || "0"),
-      });
-    }
-  });
+
+  useMemo(() => {
+    allPokemon.forEach((pokemon, index) => {
+      const imageQuery = imageQueries[index];
+      if (imageQuery?.data) {
+        const pokemonId = pokemon.url.split("/").filter(Boolean).pop();
+        pokemonImageMap.set(pokemon.name, {
+          imageUrl: imageQuery.data,
+          id: parseInt(pokemonId || "0"),
+        });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allPokemon, imageQueries]);
 
   // Intersection observer for infinite scroll
   const { ref: inViewRef, inView } = useInView({
@@ -74,68 +81,62 @@ export const PokemonListContainer = () => {
   }
 
   if (isLoading) {
-    return (
-      <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 container mx-auto'>
-        {Array.from({ length: 20 }).map((_, i) => (
-          <Card key={i} className='p-4'>
-            <Skeleton className='w-full aspect-square mb-3' />
-            <Skeleton className='h-5 w-3/4 mx-auto' />
-          </Card>
-        ))}
-      </div>
-    );
+    return <PokemonListSkeleton />;
   }
 
   if (isError) {
-    return (
-      <div className='flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4'>
-        <Alert variant='destructive' className='max-w-md'>
-          <AlertDescription>
-            {error instanceof Error ? error.message : "Failed to load Pokémon"}
-          </AlertDescription>
-        </Alert>
-        <Button onClick={() => refetch()}>Try Again</Button>
-      </div>
-    );
+    return <ErrorComponent error={error} refetch={refetch} />;
   }
 
   return (
-    <div className='container mx-auto px-4 py-8'>
-      <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
-        {allPokemon.map((pokemon, index) => (
-          <PokemonCard
-            key={pokemon.name}
-            pokemon={pokemon}
-            index={index}
-            imageData={pokemonImageMap.get(pokemon.name)}
-          />
-        ))}
-      </div>
+    <div className='min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900'>
+      <motion.div
+        className='container mx-auto px-4 py-8'
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
+        <PokemonListHeader />
 
-      {isFetchingNextPage && (
+        {/* Enhanced Pokemon Grid */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className='flex justify-center py-8'
+          className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8'
+          initial='hidden'
+          animate='visible'
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                delay: 0.2,
+                staggerChildren: 0.02,
+                delayChildren: 0.1,
+              },
+            },
+          }}
         >
-          <div className='flex items-center gap-2 text-muted-foreground'>
-            <Loader2 className='h-6 w-6 animate-spin' />
-            <span>Loading more Pokémon...</span>
-          </div>
+          {allPokemon.map((pokemon, index) => (
+            <PokemonCard
+              key={pokemon.name}
+              pokemon={pokemon}
+              index={index % 25} // Only stagger within groups of 25 to avoid long delays
+              imageData={pokemonImageMap.get(pokemon.name)}
+            />
+          ))}
         </motion.div>
-      )}
 
-      {!isFetchingNextPage && !hasNextPage && allPokemon.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className='text-center py-8'
-        >
-          <p className='text-muted-foreground'>You've caught 'em all! 🎉</p>
-        </motion.div>
-      )}
+        {/* Enhanced Loading More Section */}
+        {isFetchingNextPage && (
+          <PokemonListFetchingMore totalPokemon={allPokemon.length} />
+        )}
 
-      <div ref={inViewRef} className='h-px' />
+        {/* Enhanced Completion State */}
+        {!isFetchingNextPage && !hasNextPage && allPokemon.length > 0 && (
+          <PokemonCompletionComponent />
+        )}
+
+        <div ref={inViewRef} className='h-px' />
+      </motion.div>
     </div>
   );
 };

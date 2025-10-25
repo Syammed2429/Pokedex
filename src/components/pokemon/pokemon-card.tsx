@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 
 import { useState } from "react";
@@ -6,7 +6,10 @@ import { useState } from "react";
 import { Card, CardContent } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
 import type { PokemonListResult } from "@/types/pokemon-types";
-import { cn } from "@/lib/utils";
+import {
+  cardVariants,
+  imageVariants,
+} from "@/motion-variants/pokemon-card-variant";
 
 interface PokemonCardProps {
   pokemon: PokemonListResult;
@@ -14,7 +17,11 @@ interface PokemonCardProps {
   imageData?: { imageUrl: string; id: number };
 }
 
-export const PokemonCard = ({ pokemon, imageData }: PokemonCardProps) => {
+export const PokemonCard = ({
+  pokemon,
+  imageData,
+  index,
+}: PokemonCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const pokemonId = pokemon.url.split("/").filter(Boolean).pop();
 
@@ -25,43 +32,102 @@ export const PokemonCard = ({ pokemon, imageData }: PokemonCardProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
+      variants={cardVariants}
+      initial='hidden'
+      animate='visible'
+      whileHover='hover'
+      whileTap='tap'
+      transition={{
+        delay: Math.min(index * 0.02, 0.3),
+      }}
+      className='group'
     >
       <Link to={`/pokemon/${pokemon.name}`}>
-        <Card className='group hover:shadow-lg transition-all duration-300  overflow-hidden border-2 hover:border-primary/50'>
+        <Card className='relative overflow-hidden border-2 border-gray-200/50 dark:border-slate-700/50 hover:border-primary/50 transition-all duration-300 bg-gradient-to-br from-white via-gray-50/50 to-white dark:from-slate-800 dark:via-slate-800/50 dark:to-slate-900 hover:shadow-xl hover:shadow-primary/10'>
           <CardContent className='p-4'>
-            <div className='aspect-square relative mb-2 flex items-center justify-center  rounded-lg'>
+            {/* Animated Background Glow */}
+            <motion.div
+              className='absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100'
+              transition={{ duration: 0.3 }}
+            />
+
+            {/* Image Container */}
+            <div className='aspect-square relative mb-3 rounded-lg overflow-hidden '>
+              {/* Loading Skeleton with Pulse */}
               {(!imageData?.imageUrl || !imageLoaded) && (
-                <Skeleton className='absolute inset-0 rounded-lg bg-yellow-200/10' />
+                <motion.div
+                  className='absolute inset-0'
+                  animate={{
+                    opacity: [0.3, 0.7, 0.3],
+                    scale: [0.95, 1, 0.95],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <Skeleton className='w-full h-full rounded-lg bg-gradient-to-br from-amber-200/20 via-orange-200/20 to-red-200/20' />
+                  <motion.div
+                    className='absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent'
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  />
+                </motion.div>
               )}
+
+              {/* Pokemon Image */}
               {imageData?.imageUrl && (
-                <img
+                <motion.img
                   src={imageData.imageUrl}
                   alt={capitalizedName}
-                  className={cn(
-                    "w-full opacity-0 h-full object-contain group-hover:scale-110 group-hover:rotate-y-12 group-hover:rotate-x-6 transition-all duration-300 transform-gpu perspective-1000",
-                    {
-                      "opacity-100": imageLoaded,
-                    }
-                  )}
-                  style={{
-                    transform: imageLoaded ? "translateZ(0)" : undefined,
+                  className='w-full h-full object-contain relative z-10'
+                  variants={imageVariants}
+                  initial='loading'
+                  animate={imageLoaded ? "loaded" : "loading"}
+                  whileHover='hover'
+                  transition={{
+                    delay: Math.min(index * 0.02 + 0.1, 0.4),
                   }}
-                  loading='lazy'
                   onLoad={() => setImageLoaded(true)}
+                  loading='lazy'
                 />
               )}
             </div>
-            <div className='text-center'>
-              <p className='text-sm text-muted-foreground mb-1'>
+
+            {/* Content Section */}
+            <motion.div
+              className='text-center relative z-10'
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                delay: Math.min(index * 0.02 + 0.15, 0.3),
+                duration: 0.25,
+                ease: "easeOut",
+              }}
+            >
+              {/* Pokemon ID */}
+              <motion.p
+                className='text-xs font-mono text-muted-foreground mb-1 bg-gray-100 dark:bg-slate-700 px-2 py-1 rounded-full inline-block'
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
                 #{(imageData?.id || pokemonId)?.toString().padStart(3, "0")}
-              </p>
-              <p className='font-semibold group-hover:text-primary transition-colors'>
+              </motion.p>
+
+              {/* Pokemon Name */}
+              <motion.h3
+                className='font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary transition-colors duration-300'
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+              >
                 {capitalizedName}
-              </p>
-            </div>
+              </motion.h3>
+            </motion.div>
           </CardContent>
         </Card>
       </Link>
