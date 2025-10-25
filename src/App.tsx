@@ -3,6 +3,7 @@ import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 import { Button } from "./components/ui/button";
+import { Providers } from "./lib/providers";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <p className='text-muted-foreground'>Discover and explore Pokémon</p>
         </header>
       </div>
+      <Providers />
     </main>
   );
 }
