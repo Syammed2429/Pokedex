@@ -23,6 +23,7 @@ export const PokemonCard = ({
   index,
 }: PokemonCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const pokemonId = pokemon.url.split("/").filter(Boolean).pop();
 
   const capitalizedName = pokemon.name
@@ -54,7 +55,7 @@ export const PokemonCard = ({
             {/* Image Container */}
             <div className='aspect-square relative mb-3 rounded-lg overflow-hidden '>
               {/* Loading Skeleton with Pulse */}
-              {(!imageData?.imageUrl || !imageLoaded) && (
+              {(!imageData?.imageUrl || !imageLoaded) && !imageError && (
                 <motion.div
                   className='absolute inset-0'
                   animate={{
@@ -80,8 +81,25 @@ export const PokemonCard = ({
                 </motion.div>
               )}
 
+              {/* Fallback Image */}
+              {(!imageData?.imageUrl || imageError) && (
+                <motion.div
+                  className='w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-100 to-orange-100 dark:from-slate-700 dark:to-slate-800 relative z-10'
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className='text-center'>
+                    <div className='text-4xl mb-2 text-amber-500'>🎯</div>
+                    <p className='text-xs text-amber-600 dark:text-amber-400 font-medium'>
+                      {capitalizedName}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
               {/* Pokemon Image */}
-              {imageData?.imageUrl && (
+              {imageData?.imageUrl && !imageError && (
                 <motion.img
                   src={imageData.imageUrl}
                   alt={capitalizedName}
@@ -94,6 +112,7 @@ export const PokemonCard = ({
                     delay: Math.min(index * 0.02 + 0.1, 0.4),
                   }}
                   onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
                   loading='lazy'
                 />
               )}
