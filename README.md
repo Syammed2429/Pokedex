@@ -2,6 +2,8 @@
 
 A beautiful, responsive Pokédex application built with React, TypeScript, and modern web technologies. Explore the world of Pokémon with smooth animations, infinite scrolling, and detailed Pokémon information.
 
+[Live Link](https://pokedex-rho-drab.vercel.app/)
+
 ![Pokédex Screenshot](./public/image.png)
 
 ## ✨ Current Features
